@@ -22,7 +22,7 @@ La decisión no dependerá únicamente del rol del usuario. Se evaluará la comb
 
 ### Ejemplo
 
-Un supervisor puede tener permiso para aprobar transferencias, pero una transferencia de alto monto realizada de madrugada desde un dispositivo desconocido puede requerir validación adicional.
+Un supervisor puede tener permiso para aprobar transferencias, pero una transferencia de monto sensible realizada de madrugada desde un dispositivo desconocido puede requerir validación adicional.
 
 ## 3. Escenarios de negocio
 
@@ -57,7 +57,7 @@ Control de funciones privilegiadas según tenant, rol, dispositivo y contexto de
 
 Un supervisor de la **Empresa A** intenta aprobar una transferencia por **$8.000.000 COP** a las **2:30 a. m.** desde un **dispositivo no reconocido**.
 
-Aunque su rol permite aprobar transferencias, el monto elevado, el horario atípico y el dispositivo desconocido incrementan el riesgo.
+Aunque su rol permite aprobar transferencias, el monto sensible, el horario atípico y el dispositivo desconocido incrementan el riesgo.
 
 **Resultado esperado:** `CHALLENGE`
 
