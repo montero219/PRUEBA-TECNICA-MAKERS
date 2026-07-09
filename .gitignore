@@ -1,0 +1,44 @@
+# .NET
+bin/
+obj/
+artifacts/
+TestResults/
+*.nupkg
+*.snupkg
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# VS Code
+.vscode/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Build and coverage output
+coverage/
+coverage.*
+*.coverage
+*.coveragexml
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.cache
+~$*
+
+# Local configuration and secrets
+.env
+.env.*
+*.local
+appsettings.Local.json
+appsettings.*.Local.json
+secrets.json
+**/Properties/launchSettings.json
