@@ -1,205 +1,100 @@
-# Casos de Prueba ABAC MVP - Finora
+# Casos De Prueba ABAC MVP - Finora
 
 ## Objetivo
 
-Este documento define los casos mínimos para demostrar ABAC en el MVP de Finora.
+Este documento conecta los casos de negocio del MVP con las migraciones, reglas sembradas y pruebas automatizadas. La meta es que durante la sustentacion se pueda explicar que cada decision (`PERMIT`, `DENY`, `CHALLENGE`) sale de reglas versionadas y no de condicionales hardcodeados.
 
-La intención es validar decisiones `PERMIT`, `DENY` y `CHALLENGE` usando atributos distribuidos entre actor, recurso, operación y contexto, no únicamente roles.
+## Relacion Con Las Migraciones
 
-También sirve como guía para crear los inserts de datos de prueba sin perder la conexión lógica entre las tablas.
+Las migraciones no almacenan usuarios, actores concretos ni transferencias individuales. El actor, el monto y el contexto llegan en cada request a `POST /authorize`.
 
-## Alcance del MVP
+Las migraciones siembran el catalogo minimo que permite evaluar esos requests:
 
-Para el MVP se prueban únicamente casos de transferencias financieras.
+- `20260709120000_SembrarCatalogoAbacMvpFinora`: crea tenants `FINORA` y `ORG_EXTERNA`, recurso `TRANSFERENCIA`, operacion `APROBAR` y cinco reglas por tenant.
+- `20260709123000_SembrarVersionesReglasAbacMvpFinora`: crea la version `1.0.0` vigente de cada regla, con condiciones JSON, prioridad y decision esperada.
+- `20260709170000_AgregarAuditoriaDecisionesAutorizacion`: agrega auditoria append-only para registrar cada decision.
+- `20260709180000_AgregarFirmaDecisionesAutorizacion`: agrega `key_id_firma`, `algoritmo_firma` y `firma` para trazabilidad criptografica.
 
-Quedan fuera de esta primera versión:
+## Reglas Sembradas
 
-- Modificación de datos personales
-- Accesos administrativos
-- Casos avanzados de administración de usuarios
+| Prioridad | Regla | Decision | Condicion principal |
+|---:|---|---|---|
+| 10 | `VALIDAR_AISLAMIENTO_TENANT` | `DENY` | `actor.organizacion` distinto de `recurso.organizacion`. |
+| 20 | `BLOQUEAR_RIESGO_CRITICO` | `DENY` | `contexto.nivelRiesgo` en `["CRITICO"]`. |
+| 30 | `CONTEXTO_SOSPECHOSO` | `CHALLENGE` | Monto >= 8000000, hora entre 00:00 y 05:00, dispositivo no confiable y riesgo bajo/medio. |
+| 40 | `MONTO_SENSIBLE` | `CHALLENGE` | `recurso.monto` >= 1000001. |
+| 100 | `PERMITIR_TRANSFERENCIA_NORMAL` | `PERMIT` | Cliente de la misma organizacion, monto <= 1000000, horario normal, dispositivo confiable y riesgo bajo. |
 
-## Atributos ABAC usados
-
-| Categoría | Atributos |
-|---|---|
-| Actor | rol, organización |
-| Recurso | monto, organización |
-| Operación | `APROBAR` |
-| Contexto | hora, dispositivo confiable, nivel de riesgo |
-
-## Identificadores lógicos propuestos
-
-Estos identificadores no tienen que ser los IDs reales de base de datos. Sirven como nombres estables para conectar los inserts entre tablas y explicar cada caso.
-
-| Tipo | ID lógico | Descripción |
-|---|---|---|
-| Organización | `org_finora` | Tenant principal: Finora |
-| Organización | `org_externa` | Otro tenant usado para validar aislamiento |
-| Actor | `actor_cliente_finora` | Cliente titular perteneciente a Finora |
-| Operación | `op_aprobar_transferencia` | Operación para aprobar una transferencia |
-| Recurso | `tx_normal_finora` | Transferencia normal de Finora |
-| Recurso | `tx_monto_sensible_finora` | Transferencia de monto sensible de Finora |
-| Recurso | `tx_madrugada_finora` | Transferencia en contexto riesgoso de Finora |
-| Recurso | `tx_riesgo_critico_finora` | Transferencia con riesgo crítico |
-| Recurso | `tx_otro_tenant` | Transferencia perteneciente a otra organización |
+La prioridad menor gana. Por eso los bloqueos (`DENY`) se evaluan antes que los permisos normales.
 
 ## Casos MVP
 
-| Caso | Nombre | Resultado esperado | Qué demuestra |
-|---|---|---|---|
-| A | Transferencia normal | `PERMIT` | Camino feliz con actor válido, recurso propio y contexto confiable |
-| B | Transferencia de monto sensible | `CHALLENGE` | El monto del recurso puede exigir validación adicional |
-| C | Monto sensible, madrugada y dispositivo desconocido | `CHALLENGE` | La combinación de atributos contextuales eleva el control |
-| D | Riesgo crítico | `DENY` | El contexto puede bloquear aunque el actor sea válido |
-| E | Operación sobre otro tenant | `DENY` | Aislamiento multi-tenant |
+| Caso | Nombre | Condicion que dispara la regla | Regla esperada | Decision |
+|---|---|---|---|---|
+| A | Transferencia normal | Actor `CLIENTE`, misma organizacion, monto `500000`, hora `10:00`, dispositivo confiable, riesgo `BAJO`. | `PERMITIR_TRANSFERENCIA_NORMAL` | `PERMIT` |
+| B | Monto sensible | Misma organizacion, monto mayor a `1000000`, riesgo `BAJO`. | `MONTO_SENSIBLE` | `CHALLENGE` |
+| C | Contexto sospechoso | Monto `8000000`, hora `02:30`, dispositivo no confiable, riesgo `MEDIO`. | `CONTEXTO_SOSPECHOSO` | `CHALLENGE` |
+| D | Riesgo critico | Misma organizacion, monto normal, riesgo `CRITICO`. | `BLOQUEAR_RIESGO_CRITICO` | `DENY` |
+| E | Aislamiento multi-tenant | Request enviado con `X-Tenant-Code: FINORA`, pero con `atributosRecurso.organizacion = "ORG_EXTERNA"`. | `VALIDAR_AISLAMIENTO_TENANT` | `DENY` |
 
-## Detalle de casos
+## Trazabilidad Automatizada
 
-### Caso A - Transferencia normal
+| Caso | Cobertura automatizada actual | Archivo |
+|---|---|---|
+| A - `PERMIT` normal | Cubierto en unitarias de servicio y en integracion end-to-end contra PostgreSQL real. | `ServicioAutorizacionPruebas`, `AutorizacionAuditoriaIntegracionPruebas` |
+| B - `CHALLENGE` por monto sensible | Cubierto en unitarias de servicio y validado contra las migraciones por prueba de semillas. | `ServicioAutorizacionPruebas`, `SemillasAbacMvpFinoraPruebas` |
+| C - `CHALLENGE` por contexto sospechoso | Cubierto a nivel de evaluador por operadores `mayor_o_igual`, `entre_horas`, booleanos y `en`; no tiene prueba end-to-end propia. | `EvaluadorCondicionesPruebas`, `SemillasAbacMvpFinoraPruebas` |
+| D - `DENY` por riesgo critico | Cubierto a nivel de evaluador y repositorio de reglas vigentes; no tiene prueba end-to-end propia. | `EvaluadorCondicionesPruebas`, `RepositorioReglasAutorizacionPruebas` |
+| E - `DENY` por aislamiento tenant | Cubierto en unitarias de servicio. | `ServicioAutorizacionPruebas` |
 
-| Categoría | Valor |
-|---|---|
-| Actor | `actor_cliente_finora` |
-| Rol actor | `CLIENTE` |
-| Organización actor | `org_finora` |
-| Recurso | `tx_normal_finora` |
-| Monto | `500000` COP |
-| Organización recurso | `org_finora` |
-| Operación | `op_aprobar_transferencia` |
-| Hora | Horario normal |
-| Dispositivo confiable | `true` |
-| Nivel de riesgo | `BAJO` |
-| Resultado esperado | `PERMIT` |
+## Request Base
 
-Explicación: el cliente pertenece a la misma organización del recurso, la transferencia es de bajo monto y el contexto es confiable.
+Todos los casos usan:
 
-### Caso B - Transferencia de monto sensible
-
-| Categoría | Valor |
-|---|---|
-| Actor | `actor_cliente_finora` |
-| Rol actor | `CLIENTE` |
-| Organización actor | `org_finora` |
-| Recurso | `tx_monto_sensible_finora` |
-| Monto | `12000000` COP |
-| Organización recurso | `org_finora` |
-| Operación | `op_aprobar_transferencia` |
-| Hora | Horario normal |
-| Dispositivo confiable | `true` |
-| Nivel de riesgo | `BAJO` |
-| Resultado esperado | `CHALLENGE` |
-
-Explicación: el actor y el tenant son válidos, pero el monto supera el umbral normal de `1000000` COP y requiere validación adicional.
-
-### Caso C - Monto sensible, madrugada y dispositivo desconocido
-
-| Categoría | Valor |
-|---|---|
-| Actor | `actor_cliente_finora` |
-| Rol actor | `CLIENTE` |
-| Organización actor | `org_finora` |
-| Recurso | `tx_madrugada_finora` |
-| Monto | `8000000` COP |
-| Organización recurso | `org_finora` |
-| Operación | `op_aprobar_transferencia` |
-| Hora | `02:30` |
-| Dispositivo confiable | `false` |
-| Nivel de riesgo | `MEDIO` |
-| Resultado esperado | `CHALLENGE` |
-
-Explicación: aunque el actor pertenece al tenant correcto, la combinación de monto relevante, hora inusual y dispositivo desconocido exige validación adicional.
-
-### Caso D - Riesgo crítico
-
-| Categoría | Valor |
-|---|---|
-| Actor | `actor_cliente_finora` |
-| Rol actor | `CLIENTE` |
-| Organización actor | `org_finora` |
-| Recurso | `tx_riesgo_critico_finora` |
-| Monto | `500000` COP |
-| Organización recurso | `org_finora` |
-| Operación | `op_aprobar_transferencia` |
-| Hora | Horario normal |
-| Dispositivo confiable | `true` |
-| Nivel de riesgo | `CRITICO` |
-| Motivo del riesgo | Sesión marcada por señales antifraude críticas |
-| Resultado esperado | `DENY` |
-
-Explicación: el riesgo crítico viene del contexto de seguridad de la sesión. Por ejemplo, señales antifraude críticas, credenciales comprometidas, múltiples intentos fallidos recientes o una alerta activa sobre la cuenta. Ese contexto bloquea la operación incluso si el actor, el recurso y el tenant son válidos.
-
-### Caso E - Operación sobre otro tenant
-
-| Categoría | Valor |
-|---|---|
-| Actor | `actor_cliente_finora` |
-| Rol actor | `CLIENTE` |
-| Organización actor | `org_finora` |
-| Recurso | `tx_otro_tenant` |
-| Monto | `500000` COP |
-| Organización recurso | `org_externa` |
-| Operación | `op_aprobar_transferencia` |
-| Hora | Horario normal |
-| Dispositivo confiable | `true` |
-| Nivel de riesgo | `BAJO` |
-| Resultado esperado | `DENY` |
-
-Explicación: el actor pertenece a Finora, pero intenta operar sobre un recurso de otra organización. La regla de aislamiento multi-tenant debe bloquear la solicitud.
-
-## Matriz de trazabilidad
-
-| Caso | Actor | Recurso | Operación | Contexto | Decisión | Prueba automatizada |
-|---|---|---|---|---|---|---|
-| A | `actor_cliente_finora` | `tx_normal_finora` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `PERMIT` | `ServicioAutorizacionPruebas.AutorizarAsync_CuandoUnaReglaVigenteAplica_RetornaDecisionDeLaRegla` |
-| B | `actor_cliente_finora` | `tx_alto_monto_finora` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `CHALLENGE` | `ServicioAutorizacionPruebas.AutorizarAsync_CuandoUnaReglaExigeChallengePorMontoSensible_RetornaChallengeAuditado` |
-| C | `actor_cliente_finora` | `tx_madrugada_finora` | `op_aprobar_transferencia` | Dispositivo desconocido, `02:30`, riesgo medio | `CHALLENGE` | Pendiente (cubierto solo por `EvaluadorCondicionesPruebas` a nivel de operador, no end-to-end) |
-| D | `actor_cliente_finora` | `tx_riesgo_critico_finora` | `op_aprobar_transferencia` | Riesgo crítico | `DENY` | Pendiente (cubierto solo por `EvaluadorCondicionesPruebas` a nivel de operador, no end-to-end) |
-| E | `actor_cliente_finora` | `tx_otro_tenant` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `DENY` | `ServicioAutorizacionPruebas.AutorizarAsync_CuandoActorYRecursoPertenecenAOrganizacionesDistintas_RetornaDenyPorAislamiento` |
-
-## Guía para inserts
-
-Al crear la migración o seed, se recomienda mantener nombres o códigos únicos equivalentes a los IDs lógicos de este documento.
-
-La distribución esperada de datos puede seguir esta relación:
-
-| Datos | Propósito |
-|---|---|
-| Organizaciones | Crear `org_finora` y `org_externa` |
-| Actores o usuarios | Crear `actor_cliente_finora` asociado a `org_finora` |
-| Recursos o transferencias | Crear una transferencia por cada caso |
-| Operaciones o permisos | Crear o reutilizar la operación `APROBAR` |
-| Contextos o solicitudes de evaluación | Crear un contexto por cada caso |
-| Resultados esperados | Asociar cada escenario con `PERMIT`, `CHALLENGE` o `DENY` |
-
-La clave es que cada caso sea reconstruible desde los datos. Si las tablas están normalizadas, el caso debe poder leerse siguiendo esta cadena:
-
-```text
-caso -> actor -> organización actor
-     -> recurso -> organización recurso
-     -> operación
-     -> contexto
-     -> resultado esperado
+```http
+POST /authorize
+X-Tenant-Code: FINORA
+X-Correlation-Id: caso-a-transferencia-normal
+Content-Type: application/json
 ```
 
-## Regla conceptual esperada
+`X-Correlation-Id` es opcional para la API, pero en estos casos se envia explicitamente para demostrar trazabilidad. El valor se puede cambiar por caso (`caso-b-monto-sensible`, `caso-c-contexto-sospechoso`, etc.) y debe regresar en la respuesta como `correlationId` y persistirse en `decisiones_autorizacion.correlation_id`.
 
-La decisión no depende solo del rol del actor.
+Body base para el caso A:
 
-Debe evaluarse la combinación de:
+```json
+{
+  "codigoRecurso": "TRANSFERENCIA",
+  "codigoOperacion": "APROBAR",
+  "atributosActor": {
+    "rol": "CLIENTE",
+    "organizacion": "FINORA"
+  },
+  "atributosRecurso": {
+    "monto": "500000",
+    "organizacion": "FINORA"
+  },
+  "contexto": {
+    "hora": "10:00",
+    "dispositivoConfiable": "true",
+    "nivelRiesgo": "BAJO"
+  }
+}
+```
 
-1. Actor válido
-2. Relación actor-recurso
-3. Organización del actor contra organización del recurso
-4. Monto de la transferencia
-5. Operación solicitada
-6. Contexto de la sesión
+Para probar los otros casos manualmente se cambian solo los atributos relevantes:
 
-## Prioridad de decisión sugerida
+| Caso | Cambios sobre el body base |
+|---|---|
+| B | `atributosRecurso.monto = "12000000"` |
+| C | `atributosRecurso.monto = "8000000"`, `contexto.hora = "02:30"`, `contexto.dispositivoConfiable = "false"`, `contexto.nivelRiesgo = "MEDIO"` |
+| D | `contexto.nivelRiesgo = "CRITICO"` |
+| E | `atributosRecurso.organizacion = "ORG_EXTERNA"` |
 
-En caso de conflicto entre reglas, se recomienda este orden lógico:
+## Interfaz Visual
 
-1. `DENY` por tenant diferente
-2. `DENY` por riesgo crítico
-3. `CHALLENGE` por combinación de contexto sospechoso
-4. `CHALLENGE` por monto sensible
-5. `PERMIT` si no aplica ninguna restricción
+No se incluyo Swagger UI/OpenAPI visual en el alcance actual. La API se valida mediante pruebas automatizadas, ejemplos HTTP en `README.md` y el runbook operativo. Agregar Swagger seria un incremento pequeno y razonable si se quiere mejorar la exploracion manual del endpoint sin cambiar la logica de negocio.
+
+## Resumen Honesto
+
+Los casos A, B y E tienen cobertura directa en pruebas de servicio; el caso A ademas esta cubierto end-to-end con migraciones reales, auditoria y firma. Los casos C y D estan alineados con reglas sembradas por migracion y cubiertos por pruebas del evaluador/repositorio, pero no tienen prueba end-to-end propia en esta entrega.

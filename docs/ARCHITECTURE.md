@@ -10,7 +10,7 @@ Incluido:
 
 - API .NET 8.
 - Endpoint `POST /authorize`.
-- PostgreSQL como persistencia de catalogo y reglas.
+- PostgreSQL.
 - Versionado temporal de reglas.
 - Evaluador JSON para condiciones ABAC.
 - Reglas de ejemplo para transferencias financieras del tenant Finora.
@@ -235,7 +235,7 @@ La seleccion de reglas usa:
 - `solicitud_hash` usa SHA-256 sobre una representacion canonica de tenant, recurso, operacion, actor, recurso y contexto.
 - `correlation_id` viene de `X-Correlation-Id` o se genera internamente si el consumidor no lo envia.
 - El resultado de la decision (no la solicitud cruda) se firma con HMAC-SHA256 sobre un payload canonico que incluye `idDecision`, `codigoOrganizacion`, `decision`, `codigoRegla`, `solicitudHash`, `correlationId` y `fechaDecision`.
-- El firmador falla cerrado al arrancar la aplicacion si la clave de firma no esta configurada o no es Base64 valido, no en el primer request.
+- El firmador falla cerrado al intentar firmar una decision si la clave no esta configurada o no es Base64 valido.
 - Se eligio una unica clave activa (sin arreglo de claves para rotacion) por simplicidad de PoC; ver ADR 0004 para la limitacion aceptada.
 
 ## Trazabilidad De Decisiones

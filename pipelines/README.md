@@ -41,7 +41,7 @@ Una opcion razonable seria Release Please para crear un release PR con `CHANGELO
 
 ## CD
 
-El pipeline no despliega a nube en esta etapa porque la IaC cloud aun esta en backlog. Para no fingir un despliegue, el CD queda limitado a:
+El pipeline no despliega a nube en esta etapa porque la IaC existe como referencia, pero no se ha aplicado contra una suscripcion real ni existe todavia un workflow de despliegue con ambientes. Para no fingir un despliegue, el CD queda limitado a:
 
 - imagen Docker reproducible desde `deploy/docker/Dockerfile`;
 - escaneo de la imagen antes de cualquier publicacion;

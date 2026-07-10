@@ -10,6 +10,7 @@ Guia operativa para levantar, verificar y diagnosticar Atlas PARS en el estado a
 - Docker Desktop o Docker Engine.
 - Acceso al repositorio.
 - PostgreSQL levantado con Docker Compose o instancia compatible.
+- Herramientas locales de .NET restauradas desde `.config/dotnet-tools.json`.
 
 ## Levantar Entorno Local
 
@@ -19,7 +20,7 @@ Guia operativa para levantar, verificar y diagnosticar Atlas PARS en el estado a
 Copy-Item deploy\compose\.env.example deploy\compose\.env
 ```
 
-2. Editar `deploy\compose\.env` y cambiar `POSTGRES_PASSWORD`.
+2. Editar `deploy\compose\.env` y cambiar `POSTGRES_PASSWORD`. Las variables `ATLAS_FIRMA_*` del ejemplo son referencia para ejecucion containerizada futura; el Compose actual no las consume porque solo levanta PostgreSQL.
 
 3. Levantar base de datos:
 
@@ -27,19 +28,42 @@ Copy-Item deploy\compose\.env.example deploy\compose\.env
 docker compose --env-file deploy\compose\.env -f deploy\compose\compose.yaml up -d
 ```
 
-4. Configurar cadena de conexion como secreto local:
+El Compose actual solo levanta PostgreSQL. La API se ejecuta localmente con `dotnet run` y toma su configuracion desde user-secrets o variables de entorno.
+
+4. Restaurar herramientas locales:
+
+```powershell
+dotnet tool restore
+```
+
+5. Configurar cadena de conexion como secreto local:
 
 ```powershell
 dotnet user-secrets set "ConnectionStrings:Atlas" "Host=localhost;Port=5433;Database=atlas_pars;Username=atlas_pars;Password=<password-local>" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
 ```
 
-5. Aplicar migraciones:
+6. Generar una clave HMAC local para firma de decisiones:
+
+```powershell
+[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+7. Configurar la clave de firma como secreto local:
+
+```powershell
+dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-local" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "<clave-base64-generada>" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
+```
+
+La API necesita estos valores para firmar decisiones. Si faltan o la clave no es Base64 valida, la autorizacion falla de forma controlada al intentar firmar la decision.
+
+8. Aplicar migraciones:
 
 ```powershell
 dotnet ef database update --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
 ```
 
-6. Ejecutar API:
+9. Ejecutar API:
 
 ```powershell
 dotnet run --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
@@ -91,7 +115,7 @@ Invoke-RestMethod `
   -Body $body
 ```
 
-La respuesta incluye `idDecision`, `correlationId` y `solicitudHash`. El puerto puede variar segun el perfil local de ASP.NET.
+La respuesta incluye `idDecision`, `correlationId`, `solicitudHash`, `keyId` y `firma`. El puerto puede variar segun el perfil local de ASP.NET.
 
 Consultar la auditoria generada:
 
@@ -106,6 +130,9 @@ SELECT
     numero_version_regla,
     solicitud_hash,
     correlation_id,
+    key_id_firma,
+    algoritmo_firma,
+    firma,
     fecha_decision
 FROM decisiones_autorizacion
 WHERE correlation_id = 'demo-local-001'
@@ -235,7 +262,7 @@ dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-2026-08" --proj
 dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "<nueva-clave-base64>" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
 ```
 
-3. Reiniciar la API (falla cerrado al arrancar si la configuracion falta o es invalida).
+3. Reiniciar la API y ejecutar una prueba de autorizacion. Si la configuracion falta o es invalida, la autorizacion falla de forma controlada al intentar firmar la decision.
 4. **Advertencia**: con el diseno actual de una sola clave activa, rotar invalida la verificacion de decisiones firmadas con la clave anterior — no hay forma de recalcular esas firmas viejas con la clave nueva. Si se necesita re-verificar decisiones historicas despues de rotar, conservar la clave anterior fuera del repositorio (por ejemplo en Key Vault, version deshabilitada solo para lectura) antes de rotar.
 
 Procedimiento futuro en nube (ambos secretos):

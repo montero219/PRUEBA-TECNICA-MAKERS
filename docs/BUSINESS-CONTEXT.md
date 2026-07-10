@@ -10,7 +10,7 @@ Para resolver este problema, Finora adopta **Atlas PARS** como servicio central 
 
 ## 2. Tipo de ABAC propuesto
 
-Se implementará un modelo de **ABAC contextual y orientado a riesgo**.
+El enfoque definido para Atlas PARS es un modelo de **ABAC contextual y orientado a riesgo**.
 
 La decisión no dependerá únicamente del rol del usuario. Se evaluará la combinación de:
 
@@ -26,19 +26,19 @@ Un supervisor puede tener permiso para aprobar transferencias, pero una transfer
 
 ## 3. Escenarios de negocio
 
-Atlas evaluará inicialmente tres tipos de operaciones sensibles:
+Como visión de producto, Atlas podría evaluar tres tipos de operaciones sensibles. En el PoC actual se implementa la primera familia, transferencias financieras; las otras dos quedan como extensión natural del dominio.
 
 ### Transferencias financieras
 
-Control de operaciones según monto, propiedad de la cuenta, ubicación, horario y nivel de riesgo.
+Control de operaciones según monto, tenant/organización, horario, dispositivo y nivel de riesgo. En una evolución posterior se podrían agregar propiedad de la cuenta y ubicación.
 
 ### Modificación de datos personales
 
-Control de cambios sobre información propia, información de terceros y datos considerados críticos.
+Control de cambios sobre información propia, información de terceros y datos considerados críticos. No está implementado en el PoC actual.
 
 ### Accesos administrativos
 
-Control de funciones privilegiadas según tenant, rol, dispositivo y contexto de acceso.
+Control de funciones privilegiadas según tenant, rol, dispositivo y contexto de acceso. No está implementado en el PoC actual.
 
 ## 4. Decisiones posibles
 

@@ -25,7 +25,7 @@ No implementado aun:
 
 - Despliegue cloud aplicado en una suscripcion real.
 - Pipeline de despliegue cloud completo con OIDC, build/push de imagen y migraciones.
-- Observabilidad productiva con OpenTelemetry, metricas y health checks no triviales.
+- Observabilidad productiva con OpenTelemetry, metricas y health checks.
 - Video pitch.
 
 ## Arquitectura Rapida
@@ -94,7 +94,7 @@ Respuesta esperada:
 }
 ```
 
-`keyId` y `firma` requieren configurar `FirmaDecisiones:KeyId` y `FirmaDecisiones:ClaveActivaBase64` (user-secrets en local, variable de entorno en contenedor) — la API falla al arrancar si faltan. Ver [docs/RUNBOOK.md](docs/RUNBOOK.md).
+`keyId` y `firma` requieren configurar `FirmaDecisiones:KeyId` y `FirmaDecisiones:ClaveActivaBase64` (user-secrets en local, variable de entorno en contenedor). Si faltan o la clave no es Base64 valida, la autorizacion falla de forma controlada al intentar firmar la decision. Ver [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Reglas ABAC
 
@@ -151,7 +151,7 @@ Configurar la cadena de conexion como secreto local:
 dotnet user-secrets set "ConnectionStrings:Atlas" "Host=localhost;Port=5433;Database=atlas_pars;Username=atlas_pars;Password=<password-local>" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
 ```
 
-Configurar la clave de firma de decisiones (la API falla al arrancar si falta):
+Configurar la clave de firma de decisiones:
 
 ```powershell
 dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-2026-07" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj

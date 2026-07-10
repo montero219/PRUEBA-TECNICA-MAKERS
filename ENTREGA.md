@@ -14,10 +14,11 @@ Atlas PARS es un PoC industrializable para centralizar decisiones de autorizacio
 
 1. `README.md`: alcance, ejecucion local, endpoint y estado honesto.
 2. `docs/ARCHITECTURE.md`: arquitectura, flujo de autorizacion, auditoria y decisiones de diseno.
-3. `docs/THREAT-MODEL.md`: amenazas STRIDE y controles implementados.
-4. `docs/RUNBOOK.md`: guia operativa para levantar, probar y diagnosticar.
-5. `infra/terraform/README.md`: IaC de referencia para Azure.
-6. `AI-JOURNAL.md`: uso de IA, decisiones aceptadas/rechazadas y alcance pendiente.
+3. `docs/casos-prueba-abac-mvp.md`: casos A-E alineados con migraciones, reglas y pruebas.
+4. `docs/THREAT-MODEL.md`: amenazas STRIDE y controles implementados.
+5. `docs/RUNBOOK.md`: guia operativa para levantar, probar y diagnosticar.
+6. `infra/terraform/README.md`: IaC de referencia para Azure.
+7. `AI-JOURNAL.md`: uso de IA, decisiones aceptadas/rechazadas y alcance pendiente.
 
 ## Validacion Automatizada
 
@@ -50,6 +51,7 @@ Validaciones locales realizadas antes de la entrega:
 - CI/CD de validacion y seguridad.
 - Dependabot configurado para evitar upgrades incompatibles.
 - Terraform de referencia para Azure Container Apps, PostgreSQL Flexible Server, Key Vault, ACR y Log Analytics.
+- Matriz de casos ABAC A-E trazada contra migraciones, reglas y pruebas automatizadas.
 
 ## Alcance Pendiente
 

@@ -10,7 +10,7 @@ Este modelo cubre el PoC actual de Atlas PARS: API .NET 8, endpoint `POST /autho
 - Reglas y versiones de reglas.
 - Atributos de actor, recurso y contexto enviados por consumidores.
 - Separacion entre tenants.
-- Cadena de conexion y futuros secretos criptograficos.
+- Cadena de conexion y secretos criptograficos de firma.
 - Evidencia de auditoria en `decisiones_autorizacion`.
 
 ## Suposiciones
@@ -31,7 +31,7 @@ Este modelo cubre el PoC actual de Atlas PARS: API .NET 8, endpoint `POST /autho
 | T5 | Denial of Service | Solicitudes masivas o reglas complejas degradan latencia. | P95 > 150 ms o caida del servicio. | Evaluador en memoria simple y consultas acotadas por indices. | Rate limiting, cache de reglas vigentes, pruebas de carga, timeouts y circuit breakers. |
 | T6 | Elevation of Privilege | Una regla mal priorizada permite antes de negar. | Bypass de controles fuertes. | Prioridades explicitas; DENY por tenant y riesgo critico tienen prioridad mas alta. | Validaciones de politica en CI, pruebas de regresion por matriz ABAC y revision de cambios de reglas. |
 | T7 | Tampering | Dos versiones de regla quedan vigentes al mismo tiempo. | Decisiones ambiguas. | Restriccion `EXCLUDE USING gist` evita solapamientos temporales por regla. | Prueba de integridad contra PostgreSQL real en integracion. |
-| T8 | Information Disclosure | Se commitea una cadena de conexion real o secreto local. | Exposicion de credenciales. | La documentacion exige user-secrets o variables de entorno. | Secret scanning en CI y rotacion de cualquier secreto expuesto. |
+| T8 | Information Disclosure | Se commitea una cadena de conexion real o secreto local. | Exposicion de credenciales. | La documentacion exige user-secrets o variables de entorno; el workflow `Security` ejecuta Trivy con scanner de secretos. | Activar controles administrados del repositorio (por ejemplo GitHub secret scanning si esta disponible) y rotar cualquier secreto expuesto. |
 
 ## OWASP API Top 10 Relevante
 
