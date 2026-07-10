@@ -77,25 +77,42 @@ Reemplazar `VALOR_DE_POSTGRES_PASSWORD` por el mismo valor definido en `deploy/c
 Windows PowerShell:
 
 ```powershell
-[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$claveFirmaBase64 = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$claveFirmaBase64
 ```
 
 macOS/Linux:
 
 ```bash
-openssl rand -base64 32
+CLAVE_FIRMA_BASE64="$(openssl rand -base64 32)"
+printf '%s\n' "$CLAVE_FIRMA_BASE64"
 ```
 
-Esta clave no se escribe manualmente. Es un secreto aleatorio de 32 bytes codificado en Base64; el comando imprime el valor que debe copiarse en el siguiente paso. Normalmente se ve como una cadena larga, por ejemplo de 44 caracteres, y puede terminar en `=`.
+Esta clave no se escribe manualmente. Es un secreto aleatorio de 32 bytes codificado en Base64; el comando imprime el valor que se guarda en el siguiente paso. Normalmente se ve como una cadena larga, por ejemplo de 44 caracteres, y puede terminar en `=`.
 
 7. Configurar la clave de firma como secreto local:
 
-```bash
-dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-local" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
-dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "VALOR_BASE64_GENERADO" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+Windows PowerShell:
+
+```powershell
+$keyIdFirma = "atlas-pars-hmac-local"
+
+dotnet user-secrets set "FirmaDecisiones:KeyId" "$keyIdFirma" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$claveFirmaBase64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
-`FirmaDecisiones:KeyId` es un identificador legible para saber con que clave se firmo una decision; en local puede quedarse como `atlas-pars-hmac-local`. `FirmaDecisiones:ClaveActivaBase64` debe ser exactamente la salida del comando anterior. La API necesita estos valores para firmar decisiones. Si faltan o la clave no es Base64 valida, la autorizacion falla de forma controlada al intentar firmar la decision.
+macOS/Linux:
+
+```bash
+KEY_ID_FIRMA="atlas-pars-hmac-local"
+
+dotnet user-secrets set "FirmaDecisiones:KeyId" "$KEY_ID_FIRMA" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$CLAVE_FIRMA_BASE64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+```
+
+`FirmaDecisiones:KeyId` no es la clave secreta: es una etiqueta legible para saber con que clave se firmo una decision. En local puede quedarse como `atlas-pars-hmac-local`. `FirmaDecisiones:ClaveActivaBase64` si es el secreto y debe ser exactamente el valor generado en el paso anterior. La API necesita ambos valores para firmar decisiones. Si faltan o la clave no es Base64 valida, la autorizacion falla de forma controlada al intentar firmar la decision.
+
+Ejecutar la generacion y el `dotnet user-secrets set` en la misma terminal. Si se abre otra terminal, la variable `CLAVE_FIRMA_BASE64` o `$claveFirmaBase64` ya no existira; en ese caso, pegar manualmente el valor impreso por el comando de generacion.
 
 8. Aplicar migraciones:
 
@@ -107,6 +124,18 @@ dotnet ef database update --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 
 ```bash
 dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+```
+
+La terminal de la API muestra la URL real con una linea similar a:
+
+```text
+Now listening on: http://localhost:5080
+```
+
+Usar esa URL en las pruebas manuales. Si se quiere fijar el puerto para que todas las personas usen el mismo, ejecutar:
+
+```bash
+dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj --urls "http://localhost:5080"
 ```
 
 ## Verificacion Rapida
@@ -128,6 +157,8 @@ Probar una solicitud `PERMIT`:
 Windows PowerShell:
 
 ```powershell
+$baseUrl = "http://localhost:5080"
+
 $body = @{
   codigoRecurso = "TRANSFERENCIA"
   codigoOperacion = "APROBAR"
@@ -146,21 +177,26 @@ $body = @{
   }
 } | ConvertTo-Json -Depth 5
 
-Invoke-RestMethod `
-  -Method Post `
-  -Uri "http://localhost:5000/authorize" `
-  -Headers @{
+$params = @{
+  Method = "Post"
+  Uri = "$baseUrl/authorize"
+  Headers = @{
     "X-Tenant-Code" = "FINORA"
     "X-Correlation-Id" = "demo-local-001"
-  } `
-  -ContentType "application/json" `
-  -Body $body
+  }
+  ContentType = "application/json"
+  Body = $body
+}
+
+Invoke-RestMethod @params
 ```
 
 macOS/Linux:
 
 ```bash
-curl -sS -X POST "http://localhost:5000/authorize" \
+API_URL="http://localhost:5080"
+
+curl -sS -X POST "$API_URL/authorize" \
   -H "X-Tenant-Code: FINORA" \
   -H "X-Correlation-Id: demo-local-001" \
   -H "Content-Type: application/json" \
@@ -183,7 +219,7 @@ curl -sS -X POST "http://localhost:5000/authorize" \
   }'
 ```
 
-La respuesta incluye `idDecision`, `correlationId`, `solicitudHash`, `keyId` y `firma`. El puerto puede variar segun el perfil local de ASP.NET.
+Si la API no fue iniciada en `5080`, reemplazar `$baseUrl` o `API_URL` por la URL que aparezca en `Now listening on`. La respuesta incluye `idDecision`, `correlationId`, `solicitudHash`, `keyId` y `firma`.
 
 Consultar la auditoria generada:
 
@@ -322,21 +358,38 @@ Procedimiento local (clave de firma):
 Windows PowerShell:
 
 ```powershell
-[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+$nuevaClaveFirmaBase64 = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$nuevaClaveFirmaBase64
 ```
 
 macOS/Linux:
 
 ```bash
-openssl rand -base64 32
+NUEVA_CLAVE_FIRMA_BASE64="$(openssl rand -base64 32)"
+printf '%s\n' "$NUEVA_CLAVE_FIRMA_BASE64"
 ```
 
 2. Actualizar user-secrets con el nuevo `KeyId` (identificador legible, por ejemplo `atlas-pars-hmac-2026-08`) y la nueva clave:
 
-```bash
-dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-2026-08" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
-dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "NUEVA_CLAVE_BASE64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+Windows PowerShell:
+
+```powershell
+$nuevoKeyIdFirma = "atlas-pars-hmac-2026-08"
+
+dotnet user-secrets set "FirmaDecisiones:KeyId" "$nuevoKeyIdFirma" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$nuevaClaveFirmaBase64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
+
+macOS/Linux:
+
+```bash
+NUEVO_KEY_ID_FIRMA="atlas-pars-hmac-2026-08"
+
+dotnet user-secrets set "FirmaDecisiones:KeyId" "$NUEVO_KEY_ID_FIRMA" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$NUEVA_CLAVE_FIRMA_BASE64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+```
+
+Ejecutar la generacion y el `dotnet user-secrets set` en la misma terminal. Si se abre otra terminal, pegar manualmente el valor impreso por el comando de generacion.
 
 3. Reiniciar la API y ejecutar una prueba de autorizacion. Si la configuracion falta o es invalida, la autorizacion falla de forma controlada al intentar firmar la decision.
 4. **Advertencia**: con el diseno actual de una sola clave activa, rotar invalida la verificacion de decisiones firmadas con la clave anterior — no hay forma de recalcular esas firmas viejas con la clave nueva. Si se necesita re-verificar decisiones historicas despues de rotar, conservar la clave anterior fuera del repositorio (por ejemplo en Key Vault, version deshabilitada solo para lectura) antes de rotar.

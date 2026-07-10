@@ -94,7 +94,7 @@ Respuesta esperada:
 }
 ```
 
-`keyId` y `firma` requieren configurar `FirmaDecisiones:KeyId` y `FirmaDecisiones:ClaveActivaBase64` (user-secrets en local, variable de entorno en contenedor). Si faltan o la clave no es Base64 valida, la autorizacion falla de forma controlada al intentar firmar la decision. Ver [docs/RUNBOOK.md](docs/RUNBOOK.md).
+`keyId` y `firma` requieren configurar `FirmaDecisiones:KeyId` y `FirmaDecisiones:ClaveActivaBase64` (user-secrets en local, variable de entorno en contenedor). `KeyId` es una etiqueta legible de la clave usada; `ClaveActivaBase64` es el secreto aleatorio generado en Base64. Si faltan o la clave no es Base64 valida, la autorizacion falla de forma controlada al intentar firmar la decision. Ver [docs/RUNBOOK.md](docs/RUNBOOK.md).
 
 ## Reglas ABAC
 
@@ -173,21 +173,38 @@ Configurar la clave de firma de decisiones:
 Windows PowerShell:
 
 ```powershell
-[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$claveFirmaBase64 = [Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+$claveFirmaBase64
 ```
 
 macOS/Linux:
 
 ```bash
-openssl rand -base64 32
+CLAVE_FIRMA_BASE64="$(openssl rand -base64 32)"
+printf '%s\n' "$CLAVE_FIRMA_BASE64"
 ```
 
-Copiar la salida como `VALOR_BASE64_GENERADO`:
+`FirmaDecisiones:KeyId` es una etiqueta legible, no un secreto. `FirmaDecisiones:ClaveActivaBase64` si es el secreto generado en Base64.
+
+Windows PowerShell:
+
+```powershell
+$keyIdFirma = "atlas-pars-hmac-2026-07"
+
+dotnet user-secrets set "FirmaDecisiones:KeyId" "$keyIdFirma" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$claveFirmaBase64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+```
+
+macOS/Linux:
 
 ```bash
-dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-2026-07" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
-dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "VALOR_BASE64_GENERADO" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+KEY_ID_FIRMA="atlas-pars-hmac-2026-07"
+
+dotnet user-secrets set "FirmaDecisiones:KeyId" "$KEY_ID_FIRMA" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$CLAVE_FIRMA_BASE64" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
+
+Ejecutar la generacion y el `dotnet user-secrets set` en la misma terminal. Si se abre otra terminal, pegar manualmente el valor impreso por el comando de generacion.
 
 Aplicar migraciones:
 
@@ -200,6 +217,8 @@ Ejecutar la API:
 ```bash
 dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
+
+La terminal muestra la URL real con `Now listening on: http://localhost:PUERTO`. Usar esa URL para las pruebas manuales.
 
 ## Pruebas
 
