@@ -184,7 +184,7 @@ Ejecutar unitarias con cobertura:
 dotnet test tests\Atlas.PARS.PruebasUnitarias\Atlas.PARS.PruebasUnitarias.csproj --collect:"XPlat Code Coverage"
 ```
 
-Estado verificado el 2026-07-09:
+Estado verificado el 2026-07-10:
 
 - 34 pruebas unitarias pasan (incluye casos `CHALLENGE` por monto sensible y `DENY` por aislamiento de tenant end-to-end).
 - 1 prueba de integracion end-to-end pasa (incluye persistencia de auditoria y firma).
@@ -197,6 +197,7 @@ Estado verificado el 2026-07-09:
 
 ## Documentacion
 
+- [Guia de entrega](ENTREGA.md)
 - [Arquitectura](docs/ARCHITECTURE.md)
 - [Contexto de negocio](docs/BUSINESS-CONTEXT.md)
 - [Casos de prueba ABAC](docs/casos-prueba-abac-mvp.md)
