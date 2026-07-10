@@ -23,6 +23,187 @@ namespace Atlas.PARS.Api.Datos.Migraciones
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Atlas.PARS.Api.Modelos.Entidades.DecisionAutorizacion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<JsonDocument>("Actor")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("actor");
+
+                    b.Property<string>("AlgoritmoFirma")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("algoritmo_firma");
+
+                    b.Property<string>("AlgoritmoHash")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasDefaultValue("SHA-256")
+                        .HasColumnName("algoritmo_hash");
+
+                    b.Property<string>("CodigoOperacionSolicitada")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("codigo_operacion_solicitada");
+
+                    b.Property<string>("CodigoOrganizacion")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("codigo_organizacion");
+
+                    b.Property<string>("CodigoRecursoSolicitado")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("codigo_recurso_solicitado");
+
+                    b.Property<string>("CodigoRegla")
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("codigo_regla");
+
+                    b.Property<JsonDocument>("Contexto")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("contexto");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("Decision")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("decision");
+
+                    b.Property<DateTimeOffset>("FechaDecision")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fecha_decision")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Firma")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("firma");
+
+                    b.Property<Guid?>("IdOperacion")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_operacion");
+
+                    b.Property<Guid?>("IdOrganizacion")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_organizacion");
+
+                    b.Property<Guid?>("IdRecursoProtegido")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_recurso_protegido");
+
+                    b.Property<Guid?>("IdReglaAutorizacion")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_regla_autorizacion");
+
+                    b.Property<Guid?>("IdVersionRegla")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id_version_regla");
+
+                    b.Property<string>("KeyIdFirma")
+                        .HasMaxLength(60)
+                        .HasColumnType("varchar(60)")
+                        .HasColumnName("key_id_firma");
+
+                    b.Property<string>("Motivo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("motivo");
+
+                    b.Property<string>("NumeroVersionRegla")
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)")
+                        .HasColumnName("numero_version_regla");
+
+                    b.Property<JsonDocument>("Recurso")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("recurso");
+
+                    b.Property<string>("SolicitudHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("solicitud_hash");
+
+                    b.HasKey("Id")
+                        .HasName("pk_decisiones_autorizacion");
+
+                    b.HasIndex("CorrelationId")
+                        .HasDatabaseName("ix_decisiones_autorizacion_correlation_id");
+
+                    b.HasIndex("FechaDecision")
+                        .IsDescending()
+                        .HasDatabaseName("ix_decisiones_autorizacion_fecha_decision");
+
+                    b.HasIndex("IdOperacion")
+                        .HasDatabaseName("ix_decisiones_autorizacion_id_operacion");
+
+                    b.HasIndex("IdOrganizacion")
+                        .HasDatabaseName("ix_decisiones_autorizacion_id_organizacion");
+
+                    b.HasIndex("IdRecursoProtegido")
+                        .HasDatabaseName("ix_decisiones_autorizacion_id_recurso_protegido");
+
+                    b.HasIndex("IdReglaAutorizacion")
+                        .HasDatabaseName("ix_decisiones_autorizacion_id_regla_autorizacion");
+
+                    b.HasIndex("SolicitudHash")
+                        .HasDatabaseName("ix_decisiones_autorizacion_solicitud_hash");
+
+                    b.HasIndex("CodigoOrganizacion", "FechaDecision")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_decisiones_autorizacion_codigo_organizacion_fecha_decision");
+
+                    b.HasIndex("CodigoRegla", "FechaDecision")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_decisiones_autorizacion_codigo_regla_fecha_decision");
+
+                    b.HasIndex("Decision", "FechaDecision")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_decisiones_autorizacion_decision_fecha_decision");
+
+                    b.HasIndex("IdVersionRegla", "FechaDecision")
+                        .IsDescending(false, true)
+                        .HasDatabaseName("ix_decisiones_autorizacion_id_version_regla_fecha_decision");
+
+                    b.ToTable("decisiones_autorizacion", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_actor_objeto", "jsonb_typeof(actor) = 'object'");
+
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_codigo_organizacion_formato", "codigo_organizacion ~ '^[A-Z0-9_]+$'");
+
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_contexto_objeto", "jsonb_typeof(contexto) = 'object'");
+
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_decision_valor", "decision IN ('PERMIT', 'DENY', 'CHALLENGE')");
+
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_firma_consistente", "(firma IS NULL AND key_id_firma IS NULL AND algoritmo_firma IS NULL) OR (firma IS NOT NULL AND key_id_firma IS NOT NULL AND algoritmo_firma IS NOT NULL)");
+
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_recurso_objeto", "jsonb_typeof(recurso) = 'object'");
+
+                            t.HasCheckConstraint("ck_decisiones_autorizacion_solicitud_hash_formato", "solicitud_hash ~ '^[a-f0-9]{64}$'");
+                        });
+                });
+
             modelBuilder.Entity("Atlas.PARS.Api.Modelos.Entidades.Operacion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -233,6 +414,49 @@ namespace Atlas.PARS.Api.Datos.Migraciones
 
                             t.HasCheckConstraint("ck_versiones_regla_vigencia_rango", "vigencia_hasta IS NULL OR vigencia_hasta > vigencia_desde");
                         });
+                });
+
+            modelBuilder.Entity("Atlas.PARS.Api.Modelos.Entidades.DecisionAutorizacion", b =>
+                {
+                    b.HasOne("Atlas.PARS.Api.Modelos.Entidades.Operacion", "Operacion")
+                        .WithMany()
+                        .HasForeignKey("IdOperacion")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_decisiones_autorizacion_operaciones_id_operacion");
+
+                    b.HasOne("Atlas.PARS.Api.Modelos.Entidades.Organizacion", "Organizacion")
+                        .WithMany()
+                        .HasForeignKey("IdOrganizacion")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_decisiones_autorizacion_organizaciones_id_organizacion");
+
+                    b.HasOne("Atlas.PARS.Api.Modelos.Entidades.RecursoProtegido", "RecursoProtegido")
+                        .WithMany()
+                        .HasForeignKey("IdRecursoProtegido")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_decisiones_autorizacion_recursos_protegidos_id_recurso_protegido");
+
+                    b.HasOne("Atlas.PARS.Api.Modelos.Entidades.ReglaAutorizacion", "ReglaAutorizacion")
+                        .WithMany()
+                        .HasForeignKey("IdReglaAutorizacion")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_decisiones_autorizacion_reglas_autorizacion_id_regla_autorizacion");
+
+                    b.HasOne("Atlas.PARS.Api.Modelos.Entidades.VersionRegla", "VersionRegla")
+                        .WithMany()
+                        .HasForeignKey("IdVersionRegla")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_decisiones_autorizacion_versiones_regla_id_version_regla");
+
+                    b.Navigation("Operacion");
+
+                    b.Navigation("Organizacion");
+
+                    b.Navigation("RecursoProtegido");
+
+                    b.Navigation("ReglaAutorizacion");
+
+                    b.Navigation("VersionRegla");
                 });
 
             modelBuilder.Entity("Atlas.PARS.Api.Modelos.Entidades.Operacion", b =>

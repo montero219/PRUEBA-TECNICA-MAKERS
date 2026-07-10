@@ -20,6 +20,8 @@ public class ContextoAtlas : DbContext
 
     public DbSet<VersionRegla> VersionesRegla => Set<VersionRegla>();
 
+    public DbSet<DecisionAutorizacion> DecisionesAutorizacion => Set<DecisionAutorizacion>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

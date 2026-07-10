@@ -66,6 +66,7 @@ public class RepositorioOperacionesPruebas
             modelBuilder.Ignore<RecursoProtegido>();
             modelBuilder.Ignore<ReglaAutorizacion>();
             modelBuilder.Ignore<VersionRegla>();
+            modelBuilder.Ignore<DecisionAutorizacion>();
 
             modelBuilder.Entity<Operacion>(constructor =>
             {

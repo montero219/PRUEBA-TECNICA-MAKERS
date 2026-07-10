@@ -148,13 +148,13 @@ Explicación: el actor pertenece a Finora, pero intenta operar sobre un recurso 
 
 ## Matriz de trazabilidad
 
-| Caso | Actor | Recurso | Operación | Contexto | Decisión |
-|---|---|---|---|---|---|
-| A | `actor_cliente_finora` | `tx_normal_finora` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `PERMIT` |
-| B | `actor_cliente_finora` | `tx_alto_monto_finora` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `CHALLENGE` |
-| C | `actor_cliente_finora` | `tx_madrugada_finora` | `op_aprobar_transferencia` | Dispositivo desconocido, `02:30`, riesgo medio | `CHALLENGE` |
-| D | `actor_cliente_finora` | `tx_riesgo_critico_finora` | `op_aprobar_transferencia` | Riesgo crítico | `DENY` |
-| E | `actor_cliente_finora` | `tx_otro_tenant` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `DENY` |
+| Caso | Actor | Recurso | Operación | Contexto | Decisión | Prueba automatizada |
+|---|---|---|---|---|---|---|
+| A | `actor_cliente_finora` | `tx_normal_finora` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `PERMIT` | `ServicioAutorizacionPruebas.AutorizarAsync_CuandoUnaReglaVigenteAplica_RetornaDecisionDeLaRegla` |
+| B | `actor_cliente_finora` | `tx_alto_monto_finora` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `CHALLENGE` | `ServicioAutorizacionPruebas.AutorizarAsync_CuandoUnaReglaExigeChallengePorMontoSensible_RetornaChallengeAuditado` |
+| C | `actor_cliente_finora` | `tx_madrugada_finora` | `op_aprobar_transferencia` | Dispositivo desconocido, `02:30`, riesgo medio | `CHALLENGE` | Pendiente (cubierto solo por `EvaluadorCondicionesPruebas` a nivel de operador, no end-to-end) |
+| D | `actor_cliente_finora` | `tx_riesgo_critico_finora` | `op_aprobar_transferencia` | Riesgo crítico | `DENY` | Pendiente (cubierto solo por `EvaluadorCondicionesPruebas` a nivel de operador, no end-to-end) |
+| E | `actor_cliente_finora` | `tx_otro_tenant` | `op_aprobar_transferencia` | Confiable, riesgo bajo, horario normal | `DENY` | `ServicioAutorizacionPruebas.AutorizarAsync_CuandoActorYRecursoPertenecenAOrganizacionesDistintas_RetornaDenyPorAislamiento` |
 
 ## Guía para inserts
 

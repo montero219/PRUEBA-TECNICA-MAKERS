@@ -129,6 +129,7 @@ public class RepositorioReglasAutorizacionPruebas
             modelBuilder.Ignore<Organizacion>();
             modelBuilder.Ignore<RecursoProtegido>();
             modelBuilder.Ignore<Operacion>();
+            modelBuilder.Ignore<DecisionAutorizacion>();
 
             modelBuilder.Entity<ReglaAutorizacion>(constructor =>
             {

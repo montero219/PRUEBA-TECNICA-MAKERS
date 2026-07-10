@@ -7,5 +7,6 @@ public interface IServicioAutorizacion
     Task<ResultadoAutorizacion> AutorizarAsync(
         string codigoOrganizacion,
         SolicitudAutorizacion solicitud,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        string? correlationId = null);
 }

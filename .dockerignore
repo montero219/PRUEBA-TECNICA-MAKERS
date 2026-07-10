@@ -1,0 +1,15 @@
+.agents/
+.config/
+.git/
+.github/
+.vscode/
+artifacts/
+docs/superpowers/
+
+**/bin/
+**/obj/
+
+deploy/compose/.env
+*.user
+*.suo
+*.cache

@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_VERSION: 8.0.x
+  CONFIGURATION: Release
+
+jobs:
+  build-test:
+    name: Build, test and coverage
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: atlas_pars
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d atlas_pars"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      ConnectionStrings__Atlas: Host=localhost;Port=5432;Database=atlas_pars;Username=postgres;Password=postgres
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore projects
+        run: |
+          dotnet restore src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+          dotnet restore tests/Atlas.PARS.PruebasUnitarias/Atlas.PARS.PruebasUnitarias.csproj
+          dotnet restore tests/Atlas.PARS.PruebasIntegracion/Atlas.PARS.PruebasIntegracion.csproj
+
+      - name: Build projects
+        run: |
+          dotnet build src/Atlas.PARS.Api/Atlas.PARS.Api.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+          dotnet build tests/Atlas.PARS.PruebasUnitarias/Atlas.PARS.PruebasUnitarias.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+          dotnet build tests/Atlas.PARS.PruebasIntegracion/Atlas.PARS.PruebasIntegracion.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
+
+      - name: Unit tests with coverage
+        run: >
+          dotnet test tests/Atlas.PARS.PruebasUnitarias/Atlas.PARS.PruebasUnitarias.csproj
+          --configuration ${{ env.CONFIGURATION }}
+          --no-build
+          --collect:"XPlat Code Coverage"
+          --logger "trx;LogFileName=unit-tests.trx"
+          --results-directory artifacts/test-results/unit
+
+      - name: Integration tests
+        run: >
+          dotnet test tests/Atlas.PARS.PruebasIntegracion/Atlas.PARS.PruebasIntegracion.csproj
+          --configuration ${{ env.CONFIGURATION }}
+          --no-build
+          --logger "trx;LogFileName=integration-tests.trx"
+          --results-directory artifacts/test-results/integration
+
+      - name: Upload test and coverage artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: dotnet-test-results
+          path: artifacts/test-results
+          retention-days: 14

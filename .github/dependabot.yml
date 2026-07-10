@@ -1,0 +1,67 @@
+version: 2
+
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:00"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: nuget
+    directory: "/src/Atlas.PARS.Api"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:15"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    groups:
+      dotnet-api:
+        patterns:
+          - "*"
+
+  - package-ecosystem: nuget
+    directory: "/tests/Atlas.PARS.PruebasUnitarias"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:30"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    groups:
+      dotnet-unit-tests:
+        patterns:
+          - "*"
+
+  - package-ecosystem: nuget
+    directory: "/tests/Atlas.PARS.PruebasIntegracion"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "08:45"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    groups:
+      dotnet-integration-tests:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directory: "/deploy/docker"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Bogota
+    open-pull-requests-limit: 5
+    groups:
+      docker-base-images:
+        patterns:
+          - "*"

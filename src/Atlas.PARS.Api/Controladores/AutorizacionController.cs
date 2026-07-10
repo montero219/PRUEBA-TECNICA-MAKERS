@@ -19,6 +19,7 @@ public sealed class AutorizacionController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ResultadoAutorizacion>> AutorizarAsync(
         [FromHeader(Name = "X-Tenant-Code")] string? codigoOrganizacion,
+        [FromHeader(Name = "X-Correlation-Id")] string? correlationId,
         [FromBody] SolicitudAutorizacion solicitud,
         CancellationToken cancellationToken)
     {
@@ -34,7 +35,8 @@ public sealed class AutorizacionController : ControllerBase
         var resultado = await _servicioAutorizacion.AutorizarAsync(
             codigoOrganizacion,
             solicitud,
-            cancellationToken);
+            cancellationToken,
+            correlationId);
 
         return Ok(resultado);
     }
