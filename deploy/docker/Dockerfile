@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 COPY src/Atlas.PARS.Api/Atlas.PARS.Api.csproj src/Atlas.PARS.Api/
@@ -11,7 +11,7 @@ RUN dotnet publish src/Atlas.PARS.Api/Atlas.PARS.Api.csproj \
     --no-restore \
     /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
 
 ENV ASPNETCORE_HTTP_PORTS=8080
