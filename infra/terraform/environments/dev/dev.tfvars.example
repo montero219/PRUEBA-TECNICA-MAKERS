@@ -1,0 +1,17 @@
+project_name = "atlas-pars"
+environment  = "dev"
+name_suffix  = "001"
+location     = "eastus2"
+
+container_image_name = "atlas-pars:latest"
+
+postgres_administrator_login    = "atlas_pars_admin"
+postgres_administrator_password = "REEMPLAZAR_PASSWORD_LOCAL_DE_16_CARACTERES"
+
+decision_signing_key_id     = "atlas-pars-hmac-dev"
+decision_signing_key_base64 = "REEMPLAZAR_CON_BASE64_DE_32_BYTES"
+secret_expiration_date      = "2027-12-31T23:59:59Z"
+
+# Set this to the public IP/CIDR used by the operator or CI runner that writes bootstrap secrets.
+# Example: ["203.0.113.10/32"]
+key_vault_allowed_ip_ranges = []

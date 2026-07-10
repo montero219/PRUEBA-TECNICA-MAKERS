@@ -48,7 +48,7 @@ Motivo: la sustentacion penaliza no poder defender el repositorio. Este prompt f
 
 | Sugerencia | Decision | Motivo |
 |---|---|---|
-| Presentar la solucion como completa. | Rechazada. | Aunque ya hay auditoria, firma, prueba de integracion y CI/security baseline, todavia faltan IaC, despliegue cloud real, observabilidad productiva y video pitch. |
+| Presentar la solucion como completa. | Rechazada. | Aunque ya hay auditoria, firma, prueba de integracion, CI/security baseline e IaC de referencia, todavia faltan despliegue cloud real, observabilidad productiva y video pitch. |
 | Tratar la documentacion como relleno generico. | Rechazada. | La rubrica da peso alto a comunicacion, arquitectura y seguridad. La documentacion debe explicar decisiones reales del repo. |
 
 ## Ahorro De Tiempo
@@ -69,4 +69,4 @@ Una posible desviacion fue estimar progreso solo por cantidad de archivos creado
 
 ## Estado Honesto
 
-La IA se uso como apoyo de analisis, implementacion y redaccion. Las decisiones de alcance siguen siendo responsabilidad humana. La solucion actual demuestra un nucleo ABAC con trazabilidad, auditoria append-only, firma HMAC-SHA256, prueba de integracion y CI/security baseline; aun necesita IaC ejecutable, despliegue cloud, observabilidad productiva y endurecimiento operativo para acercarse a una entrega completa.
+La IA se uso como apoyo de analisis, implementacion y redaccion. Las decisiones de alcance siguen siendo responsabilidad humana. La solucion actual demuestra un nucleo ABAC con trazabilidad, auditoria append-only, firma HMAC-SHA256, prueba de integracion, CI/security baseline e IaC de referencia; aun necesita despliegue cloud aplicado, observabilidad productiva y endurecimiento operativo para acercarse a una entrega completa.

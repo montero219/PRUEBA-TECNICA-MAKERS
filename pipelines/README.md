@@ -5,7 +5,7 @@ Atlas PARS usa GitHub Actions como pipeline declarativo principal. La prueba tec
 ## Workflows
 
 - `.github/workflows/ci.yml`: restore, build Release, pruebas unitarias con cobertura y prueba de integracion end-to-end contra PostgreSQL 16 como service container.
-- `.github/workflows/security.yml`: CodeQL para SAST, Trivy para SCA/secrets/misconfig en el repositorio, build y escaneo Trivy de la imagen Docker, y Checkov para Terraform cuando existan archivos `.tf`.
+- `.github/workflows/security.yml`: CodeQL para SAST, Trivy para SCA/secrets/misconfig en el repositorio, build y escaneo Trivy de la imagen Docker, y Checkov para Terraform.
 - `.github/dependabot.yml`: actualizaciones semanales para GitHub Actions, NuGet y la imagen base Docker.
 
 ## Gates requeridos para `main`
@@ -47,4 +47,4 @@ El pipeline no despliega a nube en esta etapa porque la IaC cloud aun esta en ba
 - escaneo de la imagen antes de cualquier publicacion;
 - release SemVer trazable como siguiente paso.
 
-Cuando exista IaC de Azure, se debe agregar un workflow separado con ambientes `dev`, `qa` y `prod`, aprobaciones por environment y secretos referenciados desde Key Vault u OIDC federado, nunca hardcodeados.
+Ahora existe IaC de referencia en `infra/terraform`. El siguiente incremento debe agregar un workflow separado con ambientes `dev`, `qa` y `prod`, aprobaciones por environment, OIDC federado y secretos referenciados desde Key Vault, nunca hardcodeados.

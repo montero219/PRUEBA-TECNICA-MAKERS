@@ -18,12 +18,13 @@ Incluido:
 - `solicitud_hash` SHA-256 sobre solicitud canonica.
 - Firma HMAC-SHA256 del resultado de cada decision, con clave inyectada por configuracion.
 - `X-Correlation-Id` para rastrear decisiones entre consumidor, API y base.
+- IaC de referencia para Azure Container Apps, PostgreSQL Flexible Server, Key Vault, ACR y Log Analytics.
 
 Fuera del alcance implementado:
 
 - Despliegue cloud real.
 - Observabilidad productiva.
-- Despliegue cloud automatizado completo.
+- Despliegue cloud automatizado completo con OIDC, build/push de imagen y migraciones.
 - Multiples claves de firma verificables (rotacion sin perder auditoria retroactiva).
 
 ## C4 Nivel 1 - Contexto
@@ -272,5 +273,5 @@ La auditoria ahora prueba integridad operacional y criptografica. `key_id_firma`
 2. Agregar endpoint o herramienta interna para verificar firma y hash sin tener que instanciar el servicio manualmente.
 3. Ampliar pruebas automatizadas end-to-end para el Caso C (contexto sospechoso) y Caso D (riesgo critico) del catalogo ABAC MVP; `CHALLENGE` (monto sensible) y `DENY` por aislamiento de tenant ya estan cubiertos.
 4. Incorporar health checks, logs estructurados y OpenTelemetry.
-5. Implementar IaC real para Azure.
+5. Aplicar IaC en una suscripcion real, validar costos y documentar outputs.
 6. Extender CI/CD con despliegue cloud, ambientes y aprobaciones.

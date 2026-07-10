@@ -45,3 +45,13 @@ appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
 **/Properties/launchSettings.json
+
+# Terraform local state and secrets
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+*.tfplan
+crash.log
+crash.*.log

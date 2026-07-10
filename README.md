@@ -19,11 +19,12 @@ Implementado:
 - Firma HMAC-SHA256 de cada decision (`keyId` y `firma` en la respuesta y en la auditoria).
 - Prueba de integracion end-to-end para `POST /authorize`, auditoria y firma.
 - Docker Compose local para PostgreSQL.
+- IaC de referencia en Terraform para Azure Container Apps, PostgreSQL, Key Vault, ACR y Log Analytics.
 
 No implementado aun:
 
-- IaC ejecutable para nube.
-- Pipeline de despliegue cloud completo.
+- Despliegue cloud aplicado en una suscripcion real.
+- Pipeline de despliegue cloud completo con OIDC, build/push de imagen y migraciones.
 - Observabilidad productiva con OpenTelemetry, metricas y health checks no triviales.
 - Video pitch.
 
@@ -202,14 +203,15 @@ Estado verificado el 2026-07-09:
 - [Modelo de amenazas](docs/THREAT-MODEL.md)
 - [Runbook](docs/RUNBOOK.md)
 - [ADR](docs/ADR)
+- [Terraform Azure](infra/terraform/README.md)
 - [AI Journal](AI-JOURNAL.md)
 
 ## Backlog Priorizado
 
 1. Migrar a multiples claves de firma verificables para permitir rotacion sin perder auditoria retroactiva.
 2. Implementar health checks, logs estructurados y metricas OpenTelemetry.
-3. Crear IaC real para Azure con costos estimados y manejo de secretos.
-4. Crear pipeline declarativo con build, test, cobertura, SAST, SCA, escaneo Docker e IaC scanning.
+3. Aplicar IaC en una suscripcion real y validar costos/outputs.
+4. Crear pipeline de despliegue con build/push de imagen, migraciones y aprobaciones por ambiente.
 5. Grabar pitch de 5 minutos para producto y arquitectura.
 
 ## Decisiones de Alcance
