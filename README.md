@@ -138,50 +138,81 @@ Requisitos:
 - .NET 8 SDK
 - Docker Desktop o Docker Engine
 
+Los comandos comunes usan rutas con `/`, validas para Windows PowerShell, macOS y Linux. Cuando el shell cambia, se muestran variantes separadas.
+
 Levantar PostgreSQL:
 
+Windows PowerShell:
+
 ```powershell
-Copy-Item deploy\compose\.env.example deploy\compose\.env
-docker compose --env-file deploy\compose\.env -f deploy\compose\compose.yaml up -d
+Copy-Item deploy/compose/.env.example deploy/compose/.env
+```
+
+macOS/Linux:
+
+```bash
+cp deploy/compose/.env.example deploy/compose/.env
+```
+
+Editar `deploy/compose/.env`, definir un `POSTGRES_PASSWORD` local y usar ese mismo valor en el secreto de conexion.
+
+```bash
+docker compose --env-file deploy/compose/.env -f deploy/compose/compose.yaml up -d
 ```
 
 Configurar la cadena de conexion como secreto local:
 
-```powershell
-dotnet user-secrets set "ConnectionStrings:Atlas" "Host=localhost;Port=5433;Database=atlas_pars;Username=atlas_pars;Password=<password-local>" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
+```bash
+dotnet user-secrets set "ConnectionStrings:Atlas" "Host=localhost;Port=5433;Database=atlas_pars;Username=atlas_pars;Password=VALOR_DE_POSTGRES_PASSWORD" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
+
+Reemplazar `VALOR_DE_POSTGRES_PASSWORD` por el `POSTGRES_PASSWORD` definido en `deploy/compose/.env`.
 
 Configurar la clave de firma de decisiones:
 
+Windows PowerShell:
+
 ```powershell
-dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-2026-07" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
-dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "<base64-32-bytes>" --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
+[Convert]::ToBase64String([System.Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
+```
+
+macOS/Linux:
+
+```bash
+openssl rand -base64 32
+```
+
+Copiar la salida como `VALOR_BASE64_GENERADO`:
+
+```bash
+dotnet user-secrets set "FirmaDecisiones:KeyId" "atlas-pars-hmac-2026-07" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
+dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "VALOR_BASE64_GENERADO" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
 Aplicar migraciones:
 
-```powershell
-dotnet ef database update --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
+```bash
+dotnet ef database update --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
 Ejecutar la API:
 
-```powershell
-dotnet run --project src\Atlas.PARS.Api\Atlas.PARS.Api.csproj
+```bash
+dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
 ## Pruebas
 
 Ejecutar todas las pruebas:
 
-```powershell
+```bash
 dotnet test Atlas.PARS.sln
 ```
 
 Ejecutar unitarias con cobertura:
 
-```powershell
-dotnet test tests\Atlas.PARS.PruebasUnitarias\Atlas.PARS.PruebasUnitarias.csproj --collect:"XPlat Code Coverage"
+```bash
+dotnet test tests/Atlas.PARS.PruebasUnitarias/Atlas.PARS.PruebasUnitarias.csproj --collect:"XPlat Code Coverage"
 ```
 
 Estado verificado el 2026-07-10:
