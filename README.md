@@ -160,6 +160,26 @@ Editar `deploy/compose/.env`, definir un `POSTGRES_PASSWORD` local y usar ese mi
 docker compose --env-file deploy/compose/.env -f deploy/compose/compose.yaml up -d
 ```
 
+Si ya existia el volumen Docker de PostgreSQL con otro password, cambiar `.env` no actualiza el password interno. En ese caso usar el password anterior, actualizar el rol en PostgreSQL o recrear el volumen local. El detalle esta en el [runbook](docs/RUNBOOK.md).
+
+Configurar ambiente local `Development`:
+
+Windows PowerShell:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:DOTNET_ENVIRONMENT = "Development"
+```
+
+macOS/Linux:
+
+```bash
+export ASPNETCORE_ENVIRONMENT=Development
+export DOTNET_ENVIRONMENT=Development
+```
+
+El proyecto incluye un launch profile para `dotnet run` con `Development` y `http://localhost:5080`.
+
 Configurar la cadena de conexion como secreto local:
 
 ```bash
@@ -218,7 +238,7 @@ Ejecutar la API:
 dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
-La terminal muestra la URL real con `Now listening on: http://localhost:PUERTO`. Usar esa URL para las pruebas manuales.
+La terminal muestra la URL real con `Now listening on: http://localhost:PUERTO`. Con el launch profile versionado debe ser `http://localhost:5080`; usar esa URL para las pruebas manuales.
 
 ## Pruebas
 

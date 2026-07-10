@@ -45,6 +45,7 @@ appsettings.Local.json
 appsettings.*.Local.json
 secrets.json
 **/Properties/launchSettings.json
+!src/Atlas.PARS.Api/Properties/launchSettings.json
 
 # Terraform local state and secrets
 **/.terraform/

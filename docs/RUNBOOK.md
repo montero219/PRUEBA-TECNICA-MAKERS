@@ -58,13 +58,48 @@ docker compose --env-file deploy/compose/.env -f deploy/compose/compose.yaml up 
 
 El Compose actual solo levanta PostgreSQL. La API se ejecuta localmente con `dotnet run` y toma su configuracion desde user-secrets o variables de entorno.
 
+Si el contenedor ya tenia un volumen creado con otro password, cambiar `POSTGRES_PASSWORD` en `deploy/compose/.env` no cambia el password guardado dentro de PostgreSQL. El sintoma usual es:
+
+```text
+FATAL: password authentication failed for user "atlas_pars"
+```
+
+Para corregirlo en local hay dos opciones:
+
+- Mantener el password anterior y usarlo tambien en `dotnet user-secrets`.
+- Actualizar el password del rol dentro de PostgreSQL:
+
+```bash
+docker compose --env-file deploy/compose/.env -f deploy/compose/compose.yaml exec -T postgres psql -U atlas_pars -d atlas_pars -c "ALTER ROLE atlas_pars WITH PASSWORD 'VALOR_DE_POSTGRES_PASSWORD';"
+```
+
+Reemplazar `VALOR_DE_POSTGRES_PASSWORD` por el valor actual de `POSTGRES_PASSWORD`. Si se prefiere reiniciar la base desde cero, se puede borrar el volumen local con `docker compose --env-file deploy/compose/.env -f deploy/compose/compose.yaml down -v`, pero eso elimina los datos locales.
+
 4. Restaurar herramientas locales:
 
 ```bash
 dotnet tool restore
 ```
 
-5. Configurar cadena de conexion como secreto local:
+5. Configurar ambiente local `Development`.
+
+El proyecto incluye `src/Atlas.PARS.Api/Properties/launchSettings.json`, que fija `ASPNETCORE_ENVIRONMENT=Development`, `DOTNET_ENVIRONMENT=Development` y `http://localhost:5080` cuando se usa `dotnet run`. Aun asi, configurar estas variables en la terminal evita diferencias entre shells, `dotnet ef` y ejecuciones manuales.
+
+Windows PowerShell:
+
+```powershell
+$env:ASPNETCORE_ENVIRONMENT = "Development"
+$env:DOTNET_ENVIRONMENT = "Development"
+```
+
+macOS/Linux:
+
+```bash
+export ASPNETCORE_ENVIRONMENT=Development
+export DOTNET_ENVIRONMENT=Development
+```
+
+6. Configurar cadena de conexion como secreto local:
 
 ```bash
 dotnet user-secrets set "ConnectionStrings:Atlas" "Host=localhost;Port=5433;Database=atlas_pars;Username=atlas_pars;Password=VALOR_DE_POSTGRES_PASSWORD" --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
@@ -72,7 +107,7 @@ dotnet user-secrets set "ConnectionStrings:Atlas" "Host=localhost;Port=5433;Data
 
 Reemplazar `VALOR_DE_POSTGRES_PASSWORD` por el mismo valor definido en `deploy/compose/.env` como `POSTGRES_PASSWORD`.
 
-6. Generar una clave HMAC local para firma de decisiones:
+7. Generar una clave HMAC local para firma de decisiones:
 
 Windows PowerShell:
 
@@ -90,7 +125,7 @@ printf '%s\n' "$CLAVE_FIRMA_BASE64"
 
 Esta clave no se escribe manualmente. Es un secreto aleatorio de 32 bytes codificado en Base64; el comando imprime el valor que se guarda en el siguiente paso. Normalmente se ve como una cadena larga, por ejemplo de 44 caracteres, y puede terminar en `=`.
 
-7. Configurar la clave de firma como secreto local:
+8. Configurar la clave de firma como secreto local:
 
 Windows PowerShell:
 
@@ -114,28 +149,28 @@ dotnet user-secrets set "FirmaDecisiones:ClaveActivaBase64" "$CLAVE_FIRMA_BASE64
 
 Ejecutar la generacion y el `dotnet user-secrets set` en la misma terminal. Si se abre otra terminal, la variable `CLAVE_FIRMA_BASE64` o `$claveFirmaBase64` ya no existira; en ese caso, pegar manualmente el valor impreso por el comando de generacion.
 
-8. Aplicar migraciones:
+9. Aplicar migraciones:
 
 ```bash
 dotnet ef database update --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
-9. Ejecutar API:
+10. Ejecutar API:
 
 ```bash
 dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj
 ```
 
-La terminal de la API muestra la URL real con una linea similar a:
+Con el launch profile versionado, la API debe iniciar en `http://localhost:5080`. La terminal de la API muestra la URL real con una linea similar a:
 
 ```text
 Now listening on: http://localhost:5080
 ```
 
-Usar esa URL en las pruebas manuales. Si se quiere fijar el puerto para que todas las personas usen el mismo, ejecutar:
+Usar esa URL en las pruebas manuales. Si se necesita cambiar el puerto porque `5080` esta ocupado, ejecutar:
 
 ```bash
-dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj --urls "http://localhost:5080"
+dotnet run --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj --urls "http://localhost:5081"
 ```
 
 ## Verificacion Rapida
@@ -433,6 +468,9 @@ Rollback de reglas:
 |---|---|---|
 | `TENANT_REQUERIDO` | Falta header `X-Tenant-Code`. | Enviar header. |
 | Error de conexion a PostgreSQL | Base apagada o secreto incorrecto. | Revisar Docker y user-secrets. |
+| `FATAL: password authentication failed for user "atlas_pars"` | El volumen Docker fue creado con un password anterior. | Usar el password anterior en `user-secrets`, actualizar el rol con `ALTER ROLE` o recrear el volumen local con `down -v`. |
+| `Failed to bind to address ... address already in use` | El puerto de la API esta ocupado. | Cambiar el puerto con `--urls "http://localhost:OTRO_PUERTO"` y usar esa URL en las pruebas manuales. |
+| `The process cannot access the file ... Atlas.PARS.Api.dll` al ejecutar `dotnet ef` o `dotnet build` | La API o el debugger siguen corriendo y bloquearon el DLL. | Detener la API/debugger y repetir el comando. Si ya existe un build valido y solo se quieren aplicar migraciones, usar `dotnet ef database update --no-build --project src/Atlas.PARS.Api/Atlas.PARS.Api.csproj`. |
 | `DENY` inesperado | Atributo faltante o regla no vigente. | Revisar request y reglas vigentes. |
 | `CHALLENGE` inesperado | Monto sensible o contexto sospechoso. | Revisar monto, hora, dispositivo y riesgo. |
 | `TENANT_NO_CONFIGURADO` | Tenant no existe en catalogo. | Revisar `X-Tenant-Code` y tabla `organizaciones`. |
