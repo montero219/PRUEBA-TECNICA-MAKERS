@@ -26,6 +26,13 @@ updates:
       dotnet-api:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: nuget
     directory: "/tests/Atlas.PARS.PruebasUnitarias"
@@ -39,6 +46,13 @@ updates:
       dotnet-unit-tests:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: nuget
     directory: "/tests/Atlas.PARS.PruebasIntegracion"
@@ -52,6 +66,13 @@ updates:
       dotnet-integration-tests:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
 
   - package-ecosystem: docker
     directory: "/deploy/docker"
@@ -65,3 +86,10 @@ updates:
       docker-base-images:
         patterns:
           - "*"
+        update-types:
+          - minor
+          - patch
+    ignore:
+      - dependency-name: "mcr.microsoft.com/dotnet/*"
+        update-types:
+          - "version-update:semver-major"
