@@ -34,12 +34,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v4.37.4
         with:
           languages: csharp
           build-mode: manual
@@ -57,7 +57,7 @@ jobs:
           dotnet build tests/Atlas.PARS.PruebasIntegracion/Atlas.PARS.PruebasIntegracion.csproj --configuration ${{ env.CONFIGURATION }} --no-restore
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v4.37.4
 
   source-and-dependencies:
     name: Trivy SCA, secrets and source scan
@@ -124,7 +124,7 @@ jobs:
 
       - name: Checkov Terraform scan
         if: steps.terraform.outputs.count != '0'
-        uses: bridgecrewio/checkov-action@v12.1347.0
+        uses: bridgecrewio/checkov-action@v12.3114.0
         with:
           directory: infra
           framework: terraform
